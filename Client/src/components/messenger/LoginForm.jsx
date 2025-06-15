@@ -15,14 +15,14 @@ const LoginForm = ({ onLogin }) => {
   const testAccounts = [
     {
       id: "user_alice",
-      username: "Alice Johnson",
+      username: "Quốc Trí",
       email: "alice@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       password: "123456",
     },
     {
       id: "user_bob",
-      username: "Bob Smith",
+      username: "Tiến Đạt",
       email: "bob@example.com",
       avatar: "/placeholder.svg?height=40&width=40",
       password: "123456",
@@ -185,16 +185,6 @@ const LoginForm = ({ onLogin }) => {
           </button>
         </div>
 
-        {/* Instructions */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Testing Instructions:</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Click on Alice or Bob to login quickly</li>
-            <li>• Open another browser tab/window</li>
-            <li>• Login with the other account</li>
-            <li>• Start chatting between the two accounts!</li>
-          </ul>
-        </div>
       </div>
     </div>
   )

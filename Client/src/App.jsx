@@ -12,7 +12,7 @@ import "./App.css"
 const mockContacts = [
   {
     id: "user_alice",
-    name: "Alice Johnson",
+    name: "Quốc Trí",
     avatar: "/placeholder.svg?height=40&width=40",
     lastMessage: "Hey there! How are you?",
     time: "2m",
@@ -22,7 +22,7 @@ const mockContacts = [
   },
   {
     id: "user_bob",
-    name: "Bob Smith",
+    name: "Tiến Đạt",
     avatar: "/placeholder.svg?height=40&width=40",
     lastMessage: "Let's discuss the project",
     time: "5m",

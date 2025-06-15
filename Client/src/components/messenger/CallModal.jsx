@@ -100,70 +100,125 @@ const CallModal = ({
   if (!isOpen) return null;
 
   return (
-   <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-  <div className="bg-white rounded-2xl p-6 w-full h-full max-w-4/5 max-h-9/12 mx-4 relative overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className="bg-emerald-800 rounded-2xl p-6 w-full h-full max-w-4/5 max-h-9/12 mx-4 relative overflow-hidden">
 
-    {/* Remote Video + Control cùng 1 thẻ relative */}
-    {callType === "video" && (
-      <div className="absolute inset-0 ">
-        {remoteStream ? (
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
-        ) : (
-              <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                <div className="text-white text-center">
-                  <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span>
+        {/* Remote Video + Control cùng 1 thẻ relative */}
+        {callType === "video" && (
+          <div className="absolute inset-0 ">
+            {remoteStream ? (
+              <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+            ) : (
+                  <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span>
+                      </div>
+                      <p>Waiting for video...</p>
+                    </div>
                   </div>
-                  <p>Waiting for video...</p>
-                </div>
-              </div>
-            )}
+                )}
 
-        {/* Controls nằm dưới cùng video */}
-        <div className="absolute  bottom-4 left-0 right-0 flex justify-center space-x-4 z-20">
-          {isIncoming && callStatus === "incoming" ? (
-            <>
-              <button onClick={onReject} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
-              <button onClick={onAccept} className="bg-green-500 p-4 rounded-full"><Phone /></button>
-            </>
-          ) : (
-            <>
-              {callStatus === "connected" && (
+            {/* Controls nằm dưới cùng video */}
+            <div className="absolute  bottom-4 left-0 right-0 flex justify-center space-x-4 z-20">
+              {isIncoming && callStatus === "incoming" ? (
                 <>
-                  <button onClick={toggleMute} className="bg-gray-200 p-4 rounded-full">
-                    {isMuted ? <MicOff /> : <Mic />}
-                  </button>
-                  {callType === "video" && (
-                    <button onClick={toggleVideo} className="bg-gray-200 p-4 rounded-full">
-                      {isVideoEnabled ? <Video /> : <VideoOff />}
-                    </button>
+                  <button onClick={onReject} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
+                  <button onClick={onAccept} className="bg-green-500 p-4 rounded-full"><Phone /></button>
+                </>
+              ) : (
+                <>
+                  {callStatus === "connected" && (
+                    <>
+                      <button onClick={toggleMute} className="bg-gray-200 p-4 rounded-full">
+                        {isMuted ? <MicOff /> : <Mic />}
+                      </button>
+                      {callType === "video" && (
+                        <button onClick={toggleVideo} className="bg-gray-200 p-4 rounded-full">
+                          {isVideoEnabled ? <Video /> : <VideoOff />}
+                        </button>
+                      )}
+                      {callType === "voice" && (
+                        <button onClick={toggleVideo} className="bg-gray-200 p-4 rounded-full">
+                          {isVideoEnabled ? <Video /> : <VideoOff />}
+                        </button>
+                      )}
+                      <button className="bg-gray-200 p-4 rounded-full"><Volume2 /></button>
+                    </>
                   )}
-                  <button className="bg-gray-200 p-4 rounded-full"><Volume2 /></button>
+                  <button onClick={handleEndCall} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
                 </>
               )}
-              <button onClick={handleEndCall} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
-            </>
+            </div>
+          </div>
+        )}
+        {callType === "voice" && (
+          <div className="absolute inset-0 ">
+            {remoteStream ? (
+              <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+            ) : (
+                  <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                    <div className="text-white text-center">
+                      <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span>
+                      </div>
+                      <p>Waiting for video...</p>
+                    </div>
+                  </div>
+                )}
+
+            {/* Controls nằm dưới cùng video */}
+            <div className="absolute  bottom-4 left-0 right-0 flex justify-center space-x-4 z-20">
+              {isIncoming && callStatus === "incoming" ? (
+                <>
+                  <button onClick={onReject} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
+                  <button onClick={onAccept} className="bg-green-500 p-4 rounded-full"><Phone /></button>
+                </>
+              ) : (
+                <>
+                  {callStatus === "connected" && (
+                    <>
+                      <button onClick={toggleMute} className="bg-gray-200 p-4 rounded-full">
+                        {isMuted ? <MicOff /> : <Mic />}
+                      </button>
+                      {callType === "video" && (
+                        <button onClick={toggleVideo} className="bg-gray-200 p-4 rounded-full">
+                          {isVideoEnabled ? <Video /> : <VideoOff />}
+                        </button>
+                      )}
+                      {callType === "voice" && (
+                        <button onClick={toggleVideo} className="bg-gray-200 p-4 rounded-full">
+                          {isVideoEnabled ? <Video /> : <VideoOff />}
+                        </button>
+                      )}
+                      <button className="bg-gray-200 p-4 rounded-full"><Volume2 /></button>
+                    </>
+                  )}
+                  <button onClick={handleEndCall} className="bg-red-500 p-4 rounded-full"><PhoneOff /></button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Info + Local Video */}
+        <div className={`relative z-10 ${callType === "video" && callStatus === "connected" ? "text-white" : "text-gray-900"}`}>
+          <div className="text-center text-amber-300 mb-6">
+            <h3 className="text-xl  font-semibold mb-2">{isIncoming ? caller?.name : recipient?.name}</h3>
+            <p>{getCallStatusText()}</p>
+          </div>
+
+          {/* Local Video nhỏ góc phải */}
+          {callType === "video" && localStream && (
+            <div className="absolute top-1 right-4 w-80 h-40 bg-gray-900 rounded-lg overflow-hidden border-2 border-white z-30">
+              <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+            </div>
           )}
         </div>
-      </div>
-    )}
 
-    {/* Info + Local Video */}
-    <div className={`relative z-10 ${callType === "video" && callStatus === "connected" ? "text-white" : "text-gray-900"}`}>
-      <div className="text-center text-amber-300 mb-6">
-        <h3 className="text-xl  font-semibold mb-2">{isIncoming ? caller?.name : recipient?.name}</h3>
-        <p>{getCallStatusText()}</p>
+       
       </div>
-
-      {/* Local Video nhỏ góc phải */}
-      {callType === "video" && localStream && (
-        <div className="absolute top-1 right-4 w-80 h-40 bg-gray-900 rounded-lg overflow-hidden border-2 border-white z-30">
-          <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-        </div>
-      )}
     </div>
-  </div>
-</div>
 
   );
 };
