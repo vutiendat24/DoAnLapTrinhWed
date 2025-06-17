@@ -31,7 +31,7 @@ const mockContacts = [
     isOnline: true,
   },
   {
-    id: "user_kretya",
+    id: "685041ec349f4dd1ac50c496",
     name: "Kretya Studio",
     avatar: "/placeholder.svg?height=40&width=40",
     lastMessage: "Victor is typing...",
@@ -41,7 +41,7 @@ const mockContacts = [
     isOnline: true,
   },
   {
-    id: "user_pm_okta",
+    id: "68504220349f4dd1ac50c49a",
     name: "PM Okta",
     avatar: "/placeholder.svg?height=40&width=40",
     lastMessage: "I see, okay noted! I...",

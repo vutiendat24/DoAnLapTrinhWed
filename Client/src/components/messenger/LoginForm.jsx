@@ -2,6 +2,7 @@
 import React from "react"
 import { useState } from "react"
 import { User, Mail, Lock, MessageCircle } from "lucide-react"
+import axios from "../../api/axios"
 
 const LoginForm = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true)
@@ -9,6 +10,8 @@ const LoginForm = ({ onLogin }) => {
     username: "",
     email: "",
     password: "",
+    avatar:"https://res.cloudinary.com/dsfgzdr5z/image/upload/v1750069828/myglpk2ayoysfpkkewbe.jpg"
+
   })
 
   // Predefined test accounts
@@ -28,41 +31,42 @@ const LoginForm = ({ onLogin }) => {
       password: "123456",
     },
   ]
-
-  const handleSubmit = (e) => {
+const handleSubmit = async(e) => {
     e.preventDefault()
 
     if (isLogin) {
-      // Login logic
-      const user = testAccounts.find(
-        (account) => account.email === formData.email && account.password === formData.password,
-      )
+      const url =  'http://localhost:5000/api/auth/login' ;
+      const payload =  { email: formData.email, password: formData.password };
+      try {
+        const res = await axios.post(url, payload);
+        const data = res.data.data;
 
-      if (user) {
-        onLogin({
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          avatar: user.avatar,
-        })
-      } else {
-        alert(
-          "Invalid credentials! Use test accounts:\nAlice: alice@example.com\nBob: bob@example.com\nPassword: 123456",
-        )
+        onLogin(data[0]); // gửi dữ liệu user về App
+      } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+          alert(err.response.data.msg);
+        } else {
+          alert('Something went wrongggggggggggg!');
+        }
       }
     } else {
       // Register logic (simplified)
-      if (formData.username && formData.email && formData.password) {
-        const newUser = {
-          id: "user_" + Math.random().toString(36).substr(2, 9),
-          username: formData.username,
-          email: formData.email,
-          avatar: "/placeholder.svg?height=40&width=40",
+     const url = 'http://localhost:5000/api/auth/register';
+      const payload = formData;
+
+      try {
+          const res = await axios.post(url, payload);
+          const data = res.data.data;
+
+        onLogin(data); // gửi dữ liệu user về App
+      } catch (err) {
+        if (err.response && err.response.data && err.response.data.msg) {
+          alert(err.response.data.msg);
+        } else {
+          alert('Something went wrong!');
         }
-        onLogin(newUser)
-      } else {
-        alert("Please fill all fields!")
       }
+
     }
   }
 
@@ -95,7 +99,7 @@ const LoginForm = ({ onLogin }) => {
         </div>
 
         {/* Test Accounts */}
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Login (Test Accounts):</h3>
           <div className="space-y-2">
             {testAccounts.map((account) => (
@@ -116,7 +120,7 @@ const LoginForm = ({ onLogin }) => {
               </button>
             ))}
           </div>
-        </div>
+        </div> */}
 
         <div className="relative mb-6">
           <div className="absolute inset-0 flex items-center">

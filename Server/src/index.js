@@ -3,8 +3,11 @@ const http = require("http")
 const socketIo = require("socket.io")
 const cors = require("cors")
 
+require('dotenv').config();
 const app = express()
+const PORT = process.env.PORT || 3001
 const server = http.createServer(app)
+
 
 const io = socketIo(server, {
   cors: {
@@ -14,8 +17,22 @@ const io = socketIo(server, {
   },
 })
 
-app.use(cors())
+
+const connectDB = require('../src/config/mongo');
+const authRoutes = require('../src/routes/auth');
+
+connectDB()
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json())
+
+
+app.use('/api/auth', authRoutes);
+
+
 
 // Store connected users: Map<socketId, { userId, username, socketId, avatar }>
 const connectedUsers = new Map()
@@ -161,7 +178,7 @@ socket.on("call_ended", (data) => {
   })
 })
 
-const PORT = process.env.PORT || 3001
+
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
