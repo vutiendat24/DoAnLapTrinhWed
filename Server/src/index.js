@@ -1,11 +1,23 @@
 const express = require("express")
+const mongoose = require("mongoose")
 const http = require("http")
 const socketIo = require("socket.io")
 const cors = require("cors")
-
+const AppRoute = require('./routes/index')
 const app = express()
 const server = http.createServer(app)
+const dotenv = require("dotenv")
+dotenv.config()
 
+//Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ Kết nối MongoDB thành công");
+  })
+  .catch((err) => console.error("❌ MongoDB lỗi:", err));
+
+
+//Connect to Socket
 const io = socketIo(server, {
   cors: {
     origin: "http://localhost:5173", // Vite default port
@@ -16,7 +28,7 @@ const io = socketIo(server, {
 
 app.use(cors())
 app.use(express.json())
-
+AppRoute(app);
 // Store connected users: Map<socketId, { userId, username, socketId, avatar }>
 const connectedUsers = new Map()
 
