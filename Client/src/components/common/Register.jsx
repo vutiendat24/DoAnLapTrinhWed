@@ -14,6 +14,8 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    avatar:"https://res.cloudinary.com/dsfgzdr5z/image/upload/v1750069828/myglpk2ayoysfpkkewbe.jpg",
+    isOnline:false
   })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
@@ -24,13 +26,9 @@ const Register = () => {
     // Username validation
     if (!formData.username.trim()) {
       newErrors.username = "Tài khoản là bắt buộc"
-    } else if (formData.username.length < 6) {
-      newErrors.username = "Tài khoản phải có ít nhất 6 ký tự"
-    } else if (formData.username.length > 20) {
-      newErrors.username = "Tài khoản không được vượt quá 20 ký tự"
-    } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      newErrors.username = "Tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới"
-    }
+    } else if (formData.username.length < 2) {
+      newErrors.username = "Tài khoản phải có ít nhất 2 ký tự"
+    } 
 
     // Email validation
     if (!formData.email.trim()) {
@@ -71,12 +69,8 @@ const Register = () => {
       case "username":
         if (!value.trim()) {
           error = "Tài khoản là bắt buộc"
-        } else if (value.length < 6) {
-          error = "Tài khoản phải có ít nhất 6 ký tự"
-        } else if (value.length > 20) {
-          error = "Tài khoản không được vượt quá 20 ký tự"
-        } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-          error = "Tài khoản chỉ được chứa chữ cái, số và dấu gạch dưới"
+        } else if (value.length < 2) {
+          error = "Tài khoản phải có ít nhất 2 ký tự"
         }
         break
 
@@ -164,10 +158,12 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/users/register", {
+      const res = await axios.post("http://localhost:5000/api/auth/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        avatar: formData.avatar,
+        isOnline: formData.avatar
       });
 
       alert("Đăng ký thành công!");
@@ -199,7 +195,7 @@ const Register = () => {
             {/* Username Field */}
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-pink-500 mb-2">
-                Tài khoản
+                Tên người dùng 
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
