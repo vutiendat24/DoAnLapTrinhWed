@@ -1,9 +1,18 @@
+import React from 'react';
+import Header from './common/Header/Header'
+import SidebarLeft from './common/Sidebar/SidebarLeft'
+import { Outlet } from 'react-router-dom';
+
 const HomePage = () => {
     return (
-        <div>
-        <h1>Welcome to the Home Page</h1>
-        <p>This is the main landing page of our application.</p>
-        {/* Add more content or components as needed */}
+        <div className="flex flex-col h-screen">
+            <Header/>
+
+            <div className='flex flex-1 overflow-hidden'>
+                 <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                    <Outlet/>
+                </main>
+            </div>
         </div>
     );
 }
