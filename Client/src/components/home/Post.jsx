@@ -38,7 +38,7 @@ const Post = () => {
       });
 
       // Gọi API lấy tất cả bài viết của user
-      const fetchPostsByUser = async () => {94
+      const fetchPostsByUser = async () => {
         try {
           const response = await axios.get(`http://localhost:5000/posts/author/${uid}`);
           setPosts(response.data.posts || []);

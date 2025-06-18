@@ -1,11 +1,15 @@
 import Post from '../models/postModel.js';
 import Users from '../models/userModel.js';
-
+import upload from '../middleware/multer.js';
+import express from 'express';
 
 const createPost = async (req, res) => {
   try {
     const { author, text, privacy, location, device, source } = req.body;
+
     const files = req.files;
+    console.log("sss")
+    console.log(files)
 
     if (!author) {
       return res.status(400).json({
@@ -19,15 +23,12 @@ const createPost = async (req, res) => {
         message: 'Không tìm thấy người dùng với author đã cung cấp.',
       });
     }
-
     // Xử lý media từ files
-    const media = files.map((file) => {
-      const fileType = file.mimetype.startsWith('video') ? 'video' : 'image';
-      return {
-        url: `/uploads/${file.filename}`, // hoặc `${req.protocol}://${req.get('host')}/uploads/${file.filename}`
-        type: fileType,
-      };
-    });
+    const media = files.map(file => ({
+      url: `http://localhost:5000/uploads/${file.filename}`, // URL ảnh cho client
+      type: file.mimetype.startsWith('image/') ? 'image' : 'other',
+    }));
+
 
     // Tạo post mới
     const newPost = new Post({
