@@ -1,17 +1,21 @@
 "use client"
 import React from "react"
+import axios from "axios"
 import { useState, useEffect, useRef } from "react"
 import { Phone, Video, MoreHorizontal, Smile, Paperclip, Send, ImageIcon, Mic } from "lucide-react"
 import { useSocketContext } from "../../context/SocketContext"
 
 const ChatWindow = ({ contact }) => {
+  // console.log(contact)
   const [newMessage, setNewMessage] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+  const [chatHistory, setChatHistory] = useState([]); 
 
   const {
+    socket,
     isConnected,
     currentUser,
     handleSendMessage,
@@ -21,28 +25,83 @@ const ChatWindow = ({ contact }) => {
     getTypingStatus,
   } = useSocketContext()
 
-  const messages = getMessagesForUser(contact.id)
+  const messages =  getMessagesForUser(contact.id);
   const typingStatus = getTypingStatus(contact.id)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
+  const fetchChatHistory = async (userId1, userId2) => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/messages/${userId1}/${userId2}`);
+      
+
+      return res.data; // dữ liệu từ MongoDB
+    } catch (err) {
+      console.error('Error fetching chat history:', err);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      const history = await fetchChatHistory(currentUser.id, contact.id);
+      console.log( currentUser)
+      console.log("contact"+ contact)
+      setChatHistory(history); // lưu vào state mới
+    };
+
+    if (currentUser && contact.id) {
+      loadChatHistory();
+    }
+  }, [messages]);
+  useEffect(() => {
+    const handleIncomingMessage = (data) => {
+      const { senderId, recipientId } = data;
+
+        // Nếu tin nhắn là của cuộc trò chuyện hiện tại:
+      if (senderId === contact.id || recipientId === contact.id) {
+        setChatHistory((prev) => [...prev, data]);
+      }
+    };
+
+    socket.on("private_message", handleIncomingMessage);
+
+    return () => socket.off("private_message", handleIncomingMessage);
+  }, [socket, contact.id, currentUser.id]);
+
+
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [chatHistory])
 
-  const handleSendMessageClick = () => {
-    if (newMessage.trim()) {
-      handleSendMessage(contact.id, newMessage)
-      setNewMessage("")
+const handleSendMessageClick = async () => {
+  if (newMessage.trim()) {
+    const formData = new FormData();
+    formData.append('senderId', currentUser.id);
+    formData.append('recipientId', contact.id);
+    formData.append('messageType', 'text');
+    formData.append('message', newMessage);
 
-      if (isTyping) {
-        handleSendTyping(contact.id, false)
-        setIsTyping(false)
-      }
+    try {
+      const res = await axios.post('http://localhost:5000/api/messages', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setChatHistory(prev => [...prev, res.data]); // update chatHistory
+      handleSendMessage(contact.id, res.data.message); // socket emit
+    } catch (err) {
+      console.error('Send message error:', err);
+    }
+
+    setNewMessage("");
+    if (isTyping) {
+      handleSendTyping(contact.id, false);
+      setIsTyping(false);
     }
   }
+};
+
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -71,16 +130,30 @@ const ChatWindow = ({ contact }) => {
     }, 1000)
   }
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0]
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file)
-      handleSendMessage(contact.id, imageUrl, "image")
+      const formData = new FormData();
+      formData.append('senderId', currentUser.id);
+      formData.append('recipientId', contact.id);
+      formData.append('messageType', 'image');
+      formData.append('image', file);
+
+      try {
+        const res = await axios.post('http://localhost:5000/api/messages', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setChatHistory(prev => [...prev, res.data]); // update chatHistory
+        handleSendMessage(contact.id, res.data.imageUrl, 'image');
+      } catch (err) {
+        console.error('Send image error:', err);
+      }
     }
-  }
+  };
+
 
   const handleVoiceCall = async () => {
-    console.log("Starting voice call with:", contact.name)
+    console.log("Starting voice call with:", contact.username)
     const success = await handleStartCall(contact.id, "voice")
     if (!success) {
       alert("Failed to start voice call. Please check your microphone permissions.")
@@ -88,7 +161,7 @@ const ChatWindow = ({ contact }) => {
   }
 
   const handleVideoCall = async () => {
-    console.log("Starting video call with:", contact.name)
+    console.log("Starting video call with:", contact.username)
     const success = await handleStartCall(contact.id, "video")
     if (!success) {
       alert("Failed to start video call. Please check your camera and microphone permissions.")
@@ -111,7 +184,7 @@ const ChatWindow = ({ contact }) => {
             <div className="relative">
               <img
                 src={contact.avatar || "/placeholder.svg"}
-                alt={contact.name}
+                alt={contact.username}
                 className="w-10 h-10 rounded-full object-cover"
               />
               {contact.isOnline && (
@@ -119,7 +192,7 @@ const ChatWindow = ({ contact }) => {
               )}
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900">{contact.name}</h2>
+              <h2 className="font-semibold text-gray-900">{contact.username}</h2>
               <div className="flex items-center space-x-2">
                 {typingStatus && <p className="text-sm text-green-500 italic">{typingStatus.username} is typing...</p>}
                 <ConnectionStatus />
@@ -157,64 +230,65 @@ const ChatWindow = ({ contact }) => {
         </div>
 
         {/* Welcome Message */}
-        {messages.length === 0 && (
+        {chatHistory.length === 0 && (
           <div className="text-center py-8">
             <div className="bg-white rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="font-medium text-gray-900 mb-2">Start a conversation with {contact.name}</h3>
+              <h3 className="font-medium text-gray-900 mb-2">Start a conversation with {contact.username}</h3>
               <p className="text-gray-600 text-sm">Send a message or start a call to begin chatting!</p>
             </div>
           </div>
         )}
 
         {/* Messages */}
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.isOwn ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${
-                message.isOwn ? "flex-row-reverse space-x-reverse" : ""
-              }`}
-            >
-              {!message.isOwn && (
-                <img
-                  src={message.avatar || "/placeholder.svg"}
-                  alt={message.sender}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              )}
+   {chatHistory.map((message) => {
+      const isOwnMessage = message.senderId === currentUser.id;
 
-              <div className={`flex flex-col ${message.isOwn ? "items-end" : "items-start"}`}>
-                {!message.isOwn && <span className="text-sm font-medium text-gray-900 mb-1">{message.sender}</span>}
+      // Lấy avatar + tên phù hợp:
+      const senderInfo = isOwnMessage
+        ? { avatar: currentUser.avatar, username: currentUser.username }
+        : { avatar: contact.avatar, username: contact.username };
 
-                <div
-                  className={`px-4 py-2 rounded-2xl ${
-                    message.isOwn ? "bg-blue-500 text-white" : "bg-white text-gray-900 border border-gray-200"
-                  }`}
-                >
-                  {message.messageType === "image" ? (
-                    <img
-                      src={message.message || "/placeholder.svg"}
-                      alt="Shared image"
-                      className="max-w-xs rounded-lg"
-                    />
-                  ) : (
-                    <p className="text-sm">{message.message}</p>
-                  )}
-                </div>
+      return (
+        <div key={message._id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
+          <div
+            className={`flex items-start space-x-2 max-w-xs lg:max-w-md ${
+              isOwnMessage ? "flex-row-reverse space-x-reverse" : ""
+            }`}
+          >
+            {/* Avatar */}
+            <img
+              src={senderInfo.avatar || "/placeholder.svg"}
+              alt={senderInfo.username}
+              className="w-8 h-8 rounded-full object-cover"
+            />
 
-                <span className="text-xs text-gray-500 mt-1">{message.time}</span>
+            <div className={`flex flex-col ${isOwnMessage ? "items-end" : "items-start"}`}>
+              <span className="text-sm font-medium text-gray-900 mb-1">{senderInfo.username}</span>
+
+              <div
+                className={`px-4 py-2 rounded-2xl ${
+                  isOwnMessage ? "bg-blue-500 text-white" : "bg-white text-gray-900 border border-gray-200"
+                }`}
+              >
+                {message.messageType === "image" ? (
+                  <img
+                    src={message.imageUrl || "/placeholder.svg"} // Đúng ảnh Cloudinary
+                    alt="Shared image"
+                    className="max-w-xs rounded-lg"
+                  />
+                ) : (
+                  <p className="text-sm">{message.message}</p>
+                )}
               </div>
 
-              {message.isOwn && (
-                <img
-                  src={currentUser?.avatar || "/placeholder.svg"}
-                  alt="You"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-              )}
+              <span className="text-xs text-gray-500 mt-1">
+                {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
             </div>
           </div>
-        ))}
-
+        </div>
+      );
+    })}
         <div ref={messagesEndRef} />
       </div>
 
@@ -235,7 +309,7 @@ const ChatWindow = ({ contact }) => {
               value={newMessage}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              placeholder={`Message ${contact.name}...`}
+              placeholder={`Message ${contact.username}...`}
               className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows="1"
               style={{ minHeight: "40px", maxHeight: "120px" }}

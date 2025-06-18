@@ -15,22 +15,22 @@ const LoginForm = ({ onLogin }) => {
   })
 
   // Predefined test accounts
-  const testAccounts = [
-    {
-      id: "user_alice",
-      username: "Quốc Trí",
-      email: "alice@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      password: "123456",
-    },
-    {
-      id: "user_bob",
-      username: "Tiến Đạt",
-      email: "bob@example.com",
-      avatar: "/placeholder.svg?height=40&width=40",
-      password: "123456",
-    },
-  ]
+  // const testAccounts = [
+  //   {
+  //     id: "user_alice",
+  //     username: "Quốc Trí",
+  //     email: "alice@example.com",
+  //     avatar: "/placeholder.svg?height=40&width=40",
+  //     password: "123456",
+  //   },
+  //   {
+  //     id: "user_bob",
+  //     username: "Tiến Đạt",
+  //     email: "bob@example.com",
+  //     avatar: "/placeholder.svg?height=40&width=40",
+  //     password: "123456",
+  //   },
+  // ]
 const handleSubmit = async(e) => {
     e.preventDefault()
 
@@ -40,7 +40,7 @@ const handleSubmit = async(e) => {
       try {
         const res = await axios.post(url, payload);
         const data = res.data.data;
-
+        
         onLogin(data[0]); // gửi dữ liệu user về App
       } catch (err) {
         if (err.response && err.response.data && err.response.data.msg) {

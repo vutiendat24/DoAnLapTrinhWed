@@ -1,15 +1,16 @@
-const express = require("express")
-const http = require("http")
-const socketIo = require("socket.io")
-const cors = require("cors")
+import express from 'express';
+import http from 'http';
+import { Server as socketIo } from 'socket.io';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-require('dotenv').config();
+dotenv.config();
 const app = express()
 const PORT = process.env.PORT || 3001
 const server = http.createServer(app)
 
 
-const io = socketIo(server, {
+const io = new socketIo(server, {
   cors: {
     origin: "http://localhost:5173", // Vite default port
     methods: ["GET", "POST"],
@@ -17,9 +18,11 @@ const io = socketIo(server, {
   },
 })
 
+import connectDB from '../src/config/mongo.js';
+import authRoutes from '../src/routes/auth.js';
+import messageRoutes from '../src/routes/chat.js';
 
-const connectDB = require('../src/config/mongo');
-const authRoutes = require('../src/routes/auth');
+import userRoutes from '../src/routes/users.js'
 
 connectDB()
 app.use(cors({
@@ -31,12 +34,12 @@ app.use(express.json())
 
 
 app.use('/api/auth', authRoutes);
-
-
+app.use('/api', userRoutes);
+app.use('/api', messageRoutes);
 
 // Store connected users: Map<socketId, { userId, username, socketId, avatar }>
 const connectedUsers = new Map()
-
+app.set('io', io);
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id)
 
@@ -77,6 +80,17 @@ io.on("connection", (socket) => {
         messageType,
         timestamp,
       })
+
+      // io.to(sender.userId).emit("private_message", {
+      //   senderId: sender.userId,
+      //   senderInfo: {
+      //     username: sender.username,
+      //     avatar: sender.avatar,
+      //   },
+      //   message,
+      //   messageType,
+      //   timestamp,
+      // });
       console.log(`✉️ Message from ${sender.username} to ${recipientId}: ${message}`)
     }
   })

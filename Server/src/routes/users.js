@@ -1,31 +1,41 @@
 import express from 'express';
-import { driver, UserModel } from '../db.js';
+
+
+import neo4jDriver from '../config/neo4j.js';
+import User from '../models/User.js';
+
 
 const router = express.Router();
+
 
 router.get('/friends/:userId', async (req, res) => {
   const { userId } = req.params;
   const session = neo4jDriver.session();
 
   try {
-    // Lấy danh sách ID bạn bè từ Neo4j
+    // Query Neo4j để lấy danh sách friendId
     const result = await session.run(
-      'MATCH (u:User {id: $userId})-[:FRIENDS]->(friend:User) RETURN friend.id AS friendId',
+      'MATCH (u:User {id: $userId})-[:FRIEND]->(f:User) RETURN f.id AS friendId',
       { userId }
     );
 
     const friendIds = result.records.map(record => record.get('friendId'));
 
-    // Lấy thông tin chi tiết bạn bè từ MongoDB
+    // Lấy chi tiết user từ MongoDB
     const friends = await User.find({ _id: { $in: friendIds } });
-
-    res.json(friends);
+    const normalizedFriends = friends.map(friend => ({
+      id: friend._id,
+      username: friend.username,
+      email: friend.email,
+      avatar: friend.avatar,
+      isOnline: friend.isOnline
+    }));
+    res.json(normalizedFriends);
   } catch (error) {
     console.error('Error fetching friends:', error);
-    res.status(500).send('Error fetching friends');
+    res.status(500).json({ error: 'Internal server error' });
   } finally {
     await session.close();
   }
 });
-
 export default router;

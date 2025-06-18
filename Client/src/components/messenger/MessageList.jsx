@@ -23,7 +23,7 @@ const MessageList = ({ contacts, selectedContact, onSelectContact, searchTerm, o
 
   const getUnreadCount = (contact) => {
     const messages = getMessagesForUser(contact.id)
-    return messages.filter((msg) => !msg.isOwn && !msg.read).length || contact.unreadCount
+    return 0;
   }
 
   return (
@@ -71,18 +71,20 @@ const MessageList = ({ contacts, selectedContact, onSelectContact, searchTerm, o
           const isTyping = !!getTypingStatus(contact.id)
 
           return (
-            <div
+           <div
               key={contact.id}
               onClick={() => onSelectContact(contact)}
               className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                selectedContact.id === contact.id ? "bg-blue-50 border-l-4 border-l-blue-500" : ""
+                selectedContact && selectedContact.id === contact.id
+                  ? "bg-blue-50 border-l-4 border-l-blue-500"
+                  : "fff"
               }`}
             >
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <img
                     src={contact.avatar || "/placeholder.svg"}
-                    alt={contact.name}
+                    alt={contact.username}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   {contact.isOnline && (
@@ -92,7 +94,7 @@ const MessageList = ({ contacts, selectedContact, onSelectContact, searchTerm, o
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900 truncate">{contact.name}</h3>
+                    <h3 className="font-medium text-gray-900 truncate">{contact.username}</h3>
                     <span className="text-xs text-gray-500">{contact.time}</span>
                   </div>
                   <div className="flex items-center justify-between">

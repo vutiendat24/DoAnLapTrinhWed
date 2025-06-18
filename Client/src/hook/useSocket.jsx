@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { io } from "socket.io-client"
 
-const useSocket = (serverUrl = "http://localhost:3001") => {
+const useSocket = (serverUrl = "http://localhost:5000") => {
   const [socket, setSocket] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
   const [users, setUsers] = useState([])

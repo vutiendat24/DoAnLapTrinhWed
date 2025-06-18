@@ -7,6 +7,8 @@ export default defineConfig({
   ],
    server: {
     host: '0.0.0.0',
-    
+    cors: {
+      origin: '*', // Cho phép mọi nguồn (chỉ dùng cho phát triển)
+    },
   }
 })

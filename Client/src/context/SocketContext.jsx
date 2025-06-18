@@ -181,6 +181,8 @@ export const SocketProvider = ({ children, currentUser }) => {
 
   const handleStartCall = async (recipientId, callType) => {
     const success = await startCall(recipientId, callType)
+    console.log(recipientId)
+    console.log(callType)
     if (success) {
       setActiveCall({
         recipientId,
@@ -194,6 +196,7 @@ export const SocketProvider = ({ children, currentUser }) => {
   const handleAcceptCall = async () => {
     if (incomingCall) {
       const success = await answerCall(incomingCall.offer, incomingCall.caller.id, incomingCall.callType)
+      console.log(incomingCall.caller.id)
       if (success) {
         setActiveCall({
           recipientId: incomingCall.caller.id,
