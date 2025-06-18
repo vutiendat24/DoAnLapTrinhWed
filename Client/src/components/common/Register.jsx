@@ -164,7 +164,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5001/users/register", {
+      const res = await axios.post("http://localhost:5000/users/register", {
         username: formData.username,
         email: formData.email,
         password: formData.password,

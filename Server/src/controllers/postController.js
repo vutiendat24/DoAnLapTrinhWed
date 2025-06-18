@@ -1,19 +1,18 @@
-const Post = require('../models/postModel');
-const Users = require('../models/userModel');
+import Post from '../models/postModel.js';
+import Users from '../models/userModel.js';
+
 
 const createPost = async (req, res) => {
   try {
     const { author, text, privacy, location, device, source } = req.body;
     const files = req.files;
 
-    // Kiểm tra bắt buộc
     if (!author) {
       return res.status(400).json({
         message: 'Thiếu thông tin bắt buộc: author',
       });
     }
 
-    // Kiểm tra người dùng có tồn tại không
     const user = await Users.findById(author);
     if (!user) {
       return res.status(404).json({
@@ -100,4 +99,4 @@ const toggleLikeByUser = async (req, res) => {
   res.status(200).json({ likes: post.interactions.likes });
 };
 
-module.exports = { createPost, getAllPostById, toggleLikeByUser};
+export { createPost, getAllPostById, toggleLikeByUser};

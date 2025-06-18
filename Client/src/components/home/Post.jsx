@@ -40,7 +40,7 @@ const Post = () => {
       // Gọi API lấy tất cả bài viết của user
       const fetchPostsByUser = async () => {94
         try {
-          const response = await axios.get(`http://localhost:5001/posts/author/${uid}`);
+          const response = await axios.get(`http://localhost:5000/posts/author/${uid}`);
           setPosts(response.data.posts || []);
         } catch (error) {
           console.error("Lỗi khi lấy bài viết người dùng:", error);
@@ -67,7 +67,7 @@ const Post = () => {
     const action = hasLiked ? "unlike" : "like";
 
     try {
-      const res = await axios.put(`http://localhost:5001/posts/${postId}/like`, { action });
+      const res = await axios.put(`http://localhost:5000/posts/${postId}/like`, { action });
 
       const updatedLikes = res.data.interactions.likes;
 
@@ -188,7 +188,7 @@ const Post = () => {
         uploadData.append("media", file) // ✅ không dùng "media[]"
       })
 
-      const response = await axios.post("http://localhost:5001/posts/create", uploadData, {
+      const response = await axios.post("http://localhost:5000/posts/create", uploadData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

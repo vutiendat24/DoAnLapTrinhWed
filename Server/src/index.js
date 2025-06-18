@@ -1,24 +1,20 @@
-const express = require("express")
-const mongoose = require("mongoose")
-const http = require("http")
-const socketIo = require("socket.io")
-const cors = require("cors")
-const AppRoute = require('./routes/index')
+
+import express from 'express';
+import http from 'http';
+import { Server as socketIo } from 'socket.io';
+import cors from 'cors';
+import dotenv from 'dotenv';
+
+import AppRoute from './routes/index.js';
+dotenv.config();
+
 const app = express()
+const PORT = process.env.PORT || 3001
 const server = http.createServer(app)
-const dotenv = require("dotenv")
 dotenv.config()
 
-//Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ Kết nối MongoDB thành công");
-  })
-  .catch((err) => console.error("❌ MongoDB lỗi:", err));
 
-
-//Connect to Socket
-const io = socketIo(server, {
+const io = new socketIo(server, {
   cors: {
     origin: "http://localhost:5173", // Vite default port
     methods: ["GET", "POST"],
@@ -26,12 +22,29 @@ const io = socketIo(server, {
   },
 })
 
-app.use(cors())
+import connectDB from '../src/config/mongo.js';
+import authRoutes from '../src/routes/auth.js';
+import messageRoutes from '../src/routes/chat.js';
+
+import userRoutes from '../src/routes/users.js'
+
+connectDB()
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json())
+
+
+app.use('/api/auth', authRoutes);
+app.use('/api', userRoutes);
+app.use('/api', messageRoutes);
+
 AppRoute(app);
 // Store connected users: Map<socketId, { userId, username, socketId, avatar }>
 const connectedUsers = new Map()
-
+app.set('io', io);
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id)
 
@@ -72,6 +85,17 @@ io.on("connection", (socket) => {
         messageType,
         timestamp,
       })
+
+      // io.to(sender.userId).emit("private_message", {
+      //   senderId: sender.userId,
+      //   senderInfo: {
+      //     username: sender.username,
+      //     avatar: sender.avatar,
+      //   },
+      //   message,
+      //   messageType,
+      //   timestamp,
+      // });
       console.log(`✉️ Message from ${sender.username} to ${recipientId}: ${message}`)
     }
   })
@@ -173,7 +197,7 @@ socket.on("call_ended", (data) => {
   })
 })
 
-const PORT = process.env.PORT || 3001
+
 
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)

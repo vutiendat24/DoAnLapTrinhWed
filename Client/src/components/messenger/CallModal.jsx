@@ -87,9 +87,9 @@ const CallModal = ({
   const getCallStatusText = () => {
     switch (callStatus) {
       case "incoming":
-        return `Incoming ${callType} call from ${caller?.name}`;
+        return `Gọi ${callType} đến từ ${caller?.name}`;
       case "calling":
-        return `Calling ${recipient?.name}...`;
+        return `Đang gọi ${recipient?.username}...`;
       case "connected":
         return formatDuration(callDuration);
       default:
@@ -111,10 +111,24 @@ const CallModal = ({
             ) : (
                   <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                     <div className="text-white text-center">
-                      <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span>
+                      <div className="w-30 h-30 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        {/* <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span> */}
+                        {recipient &&
+                          <img
+                            src={recipient.avatar || "/placeholder.svg"}
+                            alt={recipient.username}
+                            className="w-25 h-25 rounded-full object-cover"
+                          />
+                        }
+                        {caller &&
+                          <img
+                            src={caller.avatar || "/placeholder.svg"}
+                            alt={caller.username}
+                            className="w-25 h-25 rounded-full object-cover"
+                          />
+                        }
                       </div>
-                      <p>Waiting for video...</p>
+                      <p>Đang gọi ...</p>
                     </div>
                   </div>
                 )}
@@ -159,10 +173,24 @@ const CallModal = ({
             ) : (
                   <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                     <div className="text-white text-center">
-                      <div className="w-20 h-20 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
-                        <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span>
+                      <div className="w-30 h-30 bg-gray-700 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        {/* <span className="text-2xl font-semibold">{(recipient?.name || caller?.name)?.charAt(0)}</span> */}
+                        {recipient &&
+                          <img
+                            src={recipient.avatar || "/placeholder.svg"}
+                            alt={recipient.username}
+                            className="w-25 h-25 rounded-full object-cover"
+                          />
+                        }
+                        {caller &&
+                          <img
+                            src={caller.avatar || "/placeholder.svg"}
+                            alt={caller.username}
+                            className="w-25 h-25 rounded-full object-cover"
+                          />
+                        }
                       </div>
-                      <p>Waiting for video...</p>
+                      <p>Đang gọi ...</p>
                     </div>
                   </div>
                 )}

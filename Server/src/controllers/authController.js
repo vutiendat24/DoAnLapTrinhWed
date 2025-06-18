@@ -1,6 +1,6 @@
-const bscypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const User = require('../models/userModel') 
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import User from '../models/userModel.js';
 
 const register = async (req, res) => {
     const { username, email, password } = req.body;
@@ -9,7 +9,7 @@ const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
-        const hashedPassword = await bscypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
             username,
             email,
@@ -31,7 +31,7 @@ const login = async (req, res) => {
         if (!user) {
             return res.status(400).json({ message: "User not found" });
         }   
-        const isPasswordValid = await bscypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(400).json({ message: "Invalid password" });
         }
@@ -51,9 +51,4 @@ const login = async (req, res) => {
     }
 }
 
-
-
-module.exports = {
-    register,
-    login
-};
+export { register, login };

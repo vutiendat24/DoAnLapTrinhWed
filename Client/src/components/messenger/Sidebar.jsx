@@ -1,4 +1,4 @@
-"use client"
+
 import React from "react"
 import { CheckCircle, Folder, Settings, Calendar, MessageCircle, BarChart3, Bell, LogOut } from "lucide-react"
 

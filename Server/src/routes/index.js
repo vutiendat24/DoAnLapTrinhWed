@@ -1,6 +1,6 @@
-const express = require('express');
-const userRoutes = require('./users');
-const postRoutes = require('./posts');
+import express from 'express';
+import userRoutes from './users.js';
+import postRoutes from './posts.js';
 
 const AppRoute = (app) =>{
     app.use(express.json());
@@ -9,5 +9,6 @@ const AppRoute = (app) =>{
     app.use('/posts', postRoutes);    
 }
 
-module.exports = AppRoute;
+
+export default AppRoute;
 

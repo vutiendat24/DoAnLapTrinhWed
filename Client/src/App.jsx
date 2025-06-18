@@ -6,6 +6,9 @@ import { useState } from 'react';
 
 
 const App = () => {
+
+  {/*Nơi quản lý route và bố trí các trang cố định như sidebar, header, footer*/}
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (

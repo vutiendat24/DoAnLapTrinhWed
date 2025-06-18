@@ -1,6 +1,7 @@
 
 import React from "react"
-import { useState } from "react"
+import axios from "axios"
+import { useState, useEffect } from "react"
 import Sidebar     from "./Sidebar"
 import MessageList from "./MessageList"
 import ChatWindow  from "./ChatWindow"
@@ -122,11 +123,13 @@ const mockContacts = [
   },
 ]
 
-const AppContent = () => {
-  const [currentUser, setCurrentUser] = useState(null)
+const AppContent = ({currentUser}) => {
+  // const [currentUser, setCurrentUser] = useState(null)
+  // setCurrentUser(user)
+
   const [selectedContact, setSelectedContact] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
-
+  const [contacts, setContacts] = useState([]); // thêm state để chứa friends từ API
   const {
     socket,
     incomingCall,
@@ -142,17 +145,28 @@ const AppContent = () => {
     toggleVideo,
     toggleAudio,
   } = useSocketContext()
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const res = await axios.get(`http://localhost:5000/api/friends/${currentUser.id}`);
+      const data = await res.data;
+      setContacts(data); // contacts = danh sách từ MongoDB
+    };
 
+    if (currentUser) {
+      fetchFriends();
+    }
+  }, [currentUser]);
+  
   const handleLogin = (userData) => {
-    setCurrentUser(userData)
-    const availableContacts = mockContacts.filter((contact) => contact.id !== userData.id)
+    currentUser(userData)
+    const availableContacts = contacts.filter((contact) => contact.id !== userData.id)
     if (availableContacts.length > 0) {
       setSelectedContact(availableContacts[0])
     }
   }
 
   const handleLogout = () => {
-    setCurrentUser(null)
+    currentUser = null;
     setSelectedContact(null)
   }
 
@@ -160,10 +174,13 @@ const AppContent = () => {
     return <LoginForm onLogin={handleLogin} />
   }
 
-  const availableContacts = mockContacts.filter((contact) => contact.id !== currentUser.id)
+
+  const availableContacts = contacts.filter((contact) => contact.id !== currentUser.id);
   const filteredContacts = availableContacts.filter((contact) =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+    contact.username.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+
 
   // Get contact info for calls
   const getContactById = (id) => availableContacts.find((contact) => contact.id === id)
@@ -222,15 +239,32 @@ const AppContent = () => {
 }
 
 function MessengerUI() {
-  const [currentUser, setCurrentUser] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = (userData) => {
+    setIsLoading(true);
+    setCurrentUser(userData);
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      setIsLoading(false);
+    }
+  }, [currentUser]);
+
+  if (isLoading) {
+    return <div>Loading...</div>; // hoặc spinner đẹp hơn
+  }
 
   if (!currentUser) {
-    return <LoginForm onLogin={setCurrentUser} />
+    return <LoginForm onLogin={handleLogin} />;
   }
+
 
   return (
     <SocketProvider currentUser={currentUser}>
-      <AppContent />
+      <AppContent currentUser={currentUser}  />
     </SocketProvider>
   )
 }
