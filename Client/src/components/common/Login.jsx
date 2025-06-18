@@ -8,7 +8,7 @@ import axios from "axios"
 const Login = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
-  const [formData, setFormData] = useState({ username: "", password: "" })
+  const [formData, setFormData] = useState({ email: "", password: "" })
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
 
@@ -26,12 +26,12 @@ const Login = () => {
 
     try {
       setIsLoading(true)
-      const response = await axios.post("http://localhost:5000/users/login", {
-        username: formData.username,
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
+        email: formData.email,
         password: formData.password,
       })
-
-      const token = response.data.token
+      const data = response.data.data[0];
+      const token =  data.token
       localStorage.setItem("token", token)
 
       navigate("/home")
@@ -58,19 +58,19 @@ const Login = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* username Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-pink-700 mb-2">Tài khoản</label>
+              <label htmlFor="email" className="block text-sm font-medium text-pink-700 mb-2">Tài khoản</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-pink-300" />
                 </div>
                 <input
                   type="text"
-                  id="username"
-                  name="username"
-                  value={formData.username}
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                    errors.username
+                    errors.email
                       ? "border-red-300 focus:ring-red-500 focus:border-red-500"
                       : "border-pink-300 focus:ring-pink-500 focus:border-pink-500"
                   }`}
@@ -78,7 +78,7 @@ const Login = () => {
                   disabled={isLoading}
                 />
               </div>
-              {errors.username && <p className="mt-1 text-sm text-red-600">{errors.username}</p>}
+              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
 
             {/* Password Field */}

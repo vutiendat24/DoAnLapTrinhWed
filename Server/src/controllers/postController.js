@@ -69,7 +69,8 @@ const getAllPostById = async (req, res) => {
     }
 
     // Tìm tất cả bài viết có author trùng với authorId
-    const posts = await Post.find({ author: authorId }).populate('author', 'username profile.fullName');
+    // const posts = await Post.find({ author: authorId }).populate('author', 'username profile.fullName');
+    const posts = await Post.find().populate('author', 'username profile.fullName');
 
     if (!posts || posts.length === 0) {
       return res.status(404).json({ message: "Không tìm thấy bài viết nào cho người dùng này." });

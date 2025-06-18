@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
-
+import jwt from 'jsonwebtoken';
 import { successResponse, errorResponse } from '../utils/responseUtil.js';
 import ErrorCode from '../utils/errorCodes.js';
 import neo4jDriver from '../config/neo4j.js';
@@ -81,11 +81,12 @@ router.post('/login', async (req, res) => {
         data: []
       });
     }
-
+     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.json({
       statusCode: 1000,
       message: 'Success',
       data: [{
+        token,
         id: user._id,
         username: user.username,
         email: user.email,
