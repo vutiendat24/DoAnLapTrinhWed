@@ -1,3 +1,4 @@
+
 import express from 'express';
 
 
@@ -38,4 +39,12 @@ router.get('/friends/:userId', async (req, res) => {
     await session.close();
   }
 });
+
+import { register, login } from '../controllers/authController.js';
+
+router.post("/register", register);
+router.post("/login", login);
+
+
+
 export default router;

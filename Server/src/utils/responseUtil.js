@@ -10,4 +10,4 @@ const errorResponse = (errorCode) => ({
   data: []
 });
 
-module.exports = { successResponse, errorResponse };
+export { successResponse, errorResponse };

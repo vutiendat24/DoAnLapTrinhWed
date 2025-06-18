@@ -1,5 +1,4 @@
-const HttpStatus = require('http-status-codes').StatusCodes;
-
+import { StatusCodes as HttpStatus } from 'http-status-codes';
 const ErrorCode = {
   UNCATEGORIZED_EXCEPTION: { code: 9999, message: "LỖI KHÔNG XÁC ĐỊNH", httpStatus: HttpStatus.INTERNAL_SERVER_ERROR },
   USER_NOT_FOUND_EXCEPTION: { code: 104, message: "KHÔNG TÌM THẤY NGƯỜI DÙNG", httpStatus: HttpStatus.NOT_FOUND },
@@ -9,5 +8,4 @@ const ErrorCode = {
   INVALID_ARGUMENT_EXCEPTION: { code: 108, message: "THAM SỐ KHÔNG HỢP LỆ", httpStatus: HttpStatus.BAD_REQUEST },
 
 };
-
-module.exports = ErrorCode;
+export default ErrorCode;

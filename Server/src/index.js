@@ -1,13 +1,17 @@
+
 import express from 'express';
 import http from 'http';
 import { Server as socketIo } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import AppRoute from './routes/index.js';
 dotenv.config();
+
 const app = express()
 const PORT = process.env.PORT || 3001
 const server = http.createServer(app)
+dotenv.config()
 
 
 const io = new socketIo(server, {
@@ -37,6 +41,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', messageRoutes);
 
+AppRoute(app);
 // Store connected users: Map<socketId, { userId, username, socketId, avatar }>
 const connectedUsers = new Map()
 app.set('io', io);
