@@ -5,7 +5,7 @@ import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 
-const Login = () => {
+const Login = ({onLogin}) => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({ email: "", password: "" })
@@ -33,7 +33,16 @@ const Login = () => {
       const data = response.data.data[0];
       const token =  data.token
       localStorage.setItem("token", token)
+      const user = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        avatar: data.avatar
+      };
 
+      const userInfo = JSON.stringify(user);
+      onLogin(user)
+      localStorage.setItem("user", userInfo);
       navigate("/home")
     } catch (error) {
       alert("Sai thông tin đăng nhập!")

@@ -129,7 +129,8 @@ const Header = () => {
             {/* Message Icon */}
             <button 
               onClick={() => navigate('/messenger')}
-              className="cursor-pointer not-first:p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 relative">
+              className="cursor-pointer not-first:p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 relative"
+            >
               <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 hover:text-pink-500" />
               {/* Notification badge */}
               <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-3 w-3 sm:h-4 sm:w-4 bg-red-500 rounded-full flex items-center justify-center">
@@ -145,6 +146,16 @@ const Header = () => {
               </div>
               <span className="sr-only">Hồ sơ</span>
             </button>
+            <button className="cursor-pointer p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+              onClick={()=>{
+                localStorage.clear();
+                navigate('login')
+
+              }
+              }>
+              <div>Đăng xuất </div>
+            </button>
+
           </div>
         </div>
       </div>

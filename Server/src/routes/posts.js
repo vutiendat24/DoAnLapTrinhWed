@@ -1,5 +1,5 @@
 import express from 'express';
-import { createPost, getAllPostById } from '../controllers/postController.js';
+import { createPost, getAllPostById, createComment,getComments, getAllPostByUserId } from '../controllers/postController.js';
 import multer from 'multer';
 import path from 'path';
 import upload from '../middleware/multer.js';
@@ -19,6 +19,10 @@ const router = express.Router();
 
 router.post("/create", upload.array('media'), createPost);
 router.get("/author/:authorId", getAllPostById);
+router.get("/mypost/:authorId", getAllPostByUserId);
+
 router.put("/:postId/like", getAllPostById);
+router.post("/:postId/comments", createComment)
+router.get("/:postId/comments", getComments)
 
 export default router;
