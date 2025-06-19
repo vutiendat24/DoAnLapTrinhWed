@@ -1,7 +1,23 @@
 "use client"
+
 import React from "react"
 import { useState, useRef } from "react"
-import { ImageIcon, Video, Smile, MapPin, X, Smartphone, Monitor, Tablet, Plus, Upload } from "lucide-react"
+import {
+  ImageIcon,
+  Video,
+  Smile,
+  MapPin,
+  X,
+  Smartphone,
+  Monitor,
+  Tablet,
+  Plus,
+  Upload,
+  Send,
+  Heart,
+  MessageCircle,
+  Share2,
+} from "lucide-react"
 import axios from "axios"
 import { jwtDecode } from "jwt-decode"
 import { useEffect } from "react"
@@ -12,89 +28,172 @@ const Post = () => {
   const fileInputRef = useRef(null)
   const [showPostModal, setShowPostModal] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-
   const [formData, setFormData] = useState(null)
+
+  // State cho comment - cải thiện UX
+  const [expandedPosts, setExpandedPosts] = useState({}) // Track bài post nào đang mở comments
+  const [commentInputs, setCommentInputs] = useState({}) // Nội dung comment cho từng post
+  const [postComments, setPostComments] = useState({}) // Danh sách comment cho từng post
+  const [isSubmittingComment, setIsSubmittingComment] = useState({}) // Track trạng thái submit
+  const [likedPosts, setLikedPosts] = useState([]) // Track posts đã like
 
   // Lấy userId từ token
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    try {
-      const decoded = jwtDecode(token);
-      console.log(decoded);
+    const token = localStorage.getItem("token")
+    if (token) {
+      try {
+        const decoded = jwtDecode(token)
+        const uid = decoded.userId
+        setUserId(uid)
 
-      const uid = decoded.userId;
-      setUserId(uid);
+        // Lấy danh sách posts đã like
+        const savedLikedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]")
+        setLikedPosts(savedLikedPosts)
 
-      // Cập nhật dữ liệu form mặc định
-      setFormData({
-        author: uid,
-        text: "",
-        selectedFiles: [],
-        privacy: "friends",
-        location: "",
-        device: "Laptop",
-        source: "direct",
-      });
+        setFormData({
+          author: uid,
+          text: "",
+          selectedFiles: [],
+          privacy: "friends",
+          location: "",
+          device: "Laptop",
+          source: "direct",
+        })
 
-      // Gọi API lấy tất cả bài viết của user
-      const fetchPostsByUser = async () => {
-        try {
-          const response = await axios.get(`http://localhost:5000/posts/author/${uid}`);
-          setPosts(response.data.posts || []);
-        } catch (error) {
-          console.error("Lỗi khi lấy bài viết người dùng:", error);
+        // Fetch posts
+        const fetchPostsByUser = async () => {
+          try {
+            const response = await axios.get(`http://localhost:5000/posts/author/${uid}`)
+            const postsData = response.data.posts || []
+            setPosts(postsData)
+
+            // Fetch comments cho từng post
+            const commentsData = {}
+            for (const post of postsData) {
+              try {
+                const commentResponse = await  axios.get(`http://localhost:5000/posts/${post._id}/comments`)
+               
+                console.log(post._id)
+                commentsData[post._id] = commentResponse.data.comments || []
+              } catch (error) {
+                console.error(`Lỗi khi lấy comment cho post ${post._id}:`, error)
+                commentsData[post._id] = []
+              }
+            }
+            setPostComments(commentsData)
+          } catch (error) {
+            console.error("Lỗi khi lấy bài viết:", error)
+          }
         }
-      };
 
-      fetchPostsByUser();
-
-    } catch (error) {
-      console.error("Không thể giải mã token:", error);
+        fetchPostsByUser()
+      } catch (error) {
+        console.error("Không thể giải mã token:", error)
+      }
     }
-  }
-}, []);
-
-  
- 
+  }, [])
 
   if (!formData) return null
 
-  const handleLikeToggle = async (postId) => {
-    const likedPosts = JSON.parse(localStorage.getItem("likedPosts") || "[]");
-    const hasLiked = likedPosts.includes(postId);
+  // Toggle hiển thị comments khi click vào bài post
+  const togglePostExpansion = (postId) => {
+    setExpandedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }))
+  }
 
-    const action = hasLiked ? "unlike" : "like";
+  // Handle like/unlike
+  const handleLikeToggle = async (postId) => {
+    const hasLiked = likedPosts.includes(postId)
+    const action = hasLiked ? "unlike" : "like"
 
     try {
-      const res = await axios.put(`http://localhost:5000/posts/${postId}/like`, { action });
+      const res = await axios.put(`http://localhost:5000/posts/${postId}/like`, { action })
+      const updatedLikes = res.data.interactions.likes
 
-      const updatedLikes = res.data.interactions.likes;
+      // Cập nhật state
+      const updatedLikedPosts = hasLiked ? likedPosts.filter((id) => id !== postId) : [...likedPosts, postId]
 
-      // Cập nhật trạng thái đã like trong localStorage
-      const updatedLikedPosts = hasLiked
-        ? likedPosts.filter(id => id !== postId)
-        : [...likedPosts, postId];
-      localStorage.setItem("likedPosts", JSON.stringify(updatedLikedPosts));
+      setLikedPosts(updatedLikedPosts)
+      localStorage.setItem("likedPosts", JSON.stringify(updatedLikedPosts))
 
       // Cập nhật UI
-      setPosts(prev =>
-        prev.map(post =>
-          post._id === postId
-            ? { ...post, likes: updatedLikes }
-            : post
-        )
-      );
+      setPosts((prev) =>
+        prev.map((post) =>
+          post._id === postId ? { ...post, interactions: { ...post.interactions, likes: updatedLikes } } : post,
+        ),
+      )
     } catch (err) {
-      console.error("Like toggle error:", err);
+      console.error("Like toggle error:", err)
     }
-  };
+  }
 
+  // Handle submit comment
+  const handleSubmitComment = async (postId) => {
+    const commentContent = commentInputs[postId]?.trim()
+    if (!commentContent) return
 
-  // Mở modal
+    setIsSubmittingComment((prev) => ({ ...prev, [postId]: true }))
+
+    try {
+      const token = localStorage.getItem("token")
+      const decoded = jwtDecode(token)
+      const userId = decoded.userId
+
+      const res = await axios.post(`http://localhost:5000/posts/${postId}/comments`, {
+        userId,
+        content: commentContent,
+      })
+
+      // Cập nhật comments
+      setPostComments((prev) => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), res.data.comment],
+      }))
+
+      // Cập nhật số lượng comment trong post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                interactions: {
+                  ...post.interactions,
+                  comments: [...(post.interactions.comments || []), res.data.comment],
+                },
+              }
+            : post,
+        ),
+      )
+
+      // Reset input
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }))
+    } catch (error) {
+      console.error("Lỗi khi gửi bình luận:", error)
+      alert("Không thể gửi bình luận!")
+    } finally {
+      setIsSubmittingComment((prev) => ({ ...prev, [postId]: false }))
+    }
+  }
+
+  const handleCommentInputChange = (postId, value) => {
+    setCommentInputs((prev) => ({
+      ...prev,
+      [postId]: value,
+    }))
+  }
+
+  const handleCommentKeyPress = (e, postId) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmitComment(postId)
+    }
+  }
+
+  // Modal functions (giữ nguyên từ code gốc)
   const handleOpenPostModal = () => setShowPostModal(true)
 
-  // Đóng modal và reset form
   const handleClosePostModal = () => {
     setShowPostModal(false)
     setFormData({
@@ -108,7 +207,6 @@ const Post = () => {
     })
   }
 
-  // Thay đổi nội dung form
   const handleFormChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -116,7 +214,6 @@ const Post = () => {
     }))
   }
 
-  // Chọn file từ input
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files)
     const imageFiles = files.filter((file) => file.type.startsWith("image/"))
@@ -127,11 +224,9 @@ const Post = () => {
         selectedFiles: [...prev.selectedFiles, ...imageFiles],
       }))
     }
-
     e.target.value = ""
   }
 
-  // Xoá ảnh đã chọn
   const removeFile = (indexToRemove) => {
     setFormData((prev) => ({
       ...prev,
@@ -139,7 +234,6 @@ const Post = () => {
     }))
   }
 
-  // Drag & Drop
   const handleDragOver = (e) => e.preventDefault()
 
   const handleDrop = (e) => {
@@ -154,21 +248,14 @@ const Post = () => {
       }))
     }
   }
-  // Tạo preview URL từ File object
+
   const createPreviewUrl = (file) => {
     return URL.createObjectURL(file)
   }
 
-  // Tạo bài viết
   const handleSubmitPost = async (e) => {
     e.preventDefault()
-    console.log(formData.author)
-    if (!formData.author) {
-      alert("Không tìm thấy thông tin người dùng!")
-      return
-    }
-
-    if (!formData.text.trim()) {
+    if (!formData.author || !formData.text.trim()) {
       alert("Vui lòng nhập nội dung bài viết!")
       return
     }
@@ -185,7 +272,7 @@ const Post = () => {
       uploadData.append("source", formData.source)
 
       formData.selectedFiles.forEach((file) => {
-        uploadData.append("media", file) // ✅ không dùng "media[]"
+        uploadData.append("media", file)
       })
 
       const response = await axios.post("http://localhost:5000/posts/create", uploadData, {
@@ -194,12 +281,11 @@ const Post = () => {
         },
       })
 
-      console.log("Post created successfully:", response.data)
       alert("Tạo bài viết thành công!")
       setPosts((prev) => [response.data.post, ...prev])
     } catch (error) {
       console.error("Error creating post:", error)
-      alert(error.response?.data?.message || "Đã có lỗi xảy ra khi tạo bài viết!")
+      alert(error.response?.data?.message || "Đã có lỗi xảy ra!")
     } finally {
       setIsUploading(false)
       handleClosePostModal()
@@ -208,7 +294,7 @@ const Post = () => {
 
   return (
     <div className="max-w-2xl mx-auto py-4 px-4 sm:px-0">
-      {/* Create Post */}
+      {/* Create Post Section */}
       <div className="bg-white rounded-xl shadow mb-6">
         <div className="p-4">
           <div className="flex items-center space-x-3">
@@ -217,7 +303,7 @@ const Post = () => {
             </div>
             <button
               onClick={handleOpenPostModal}
-              className="bg-gray-100 hover:bg-gray-200 rounded-full py-2.5 px-4 flex-1 focus:outline-none focus:ring-pink-500 transition-colors text-left text-gray-500"
+              className="bg-gray-100 hover:bg-gray-200 rounded-full py-2.5 px-4 flex-1 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors text-left text-gray-500"
             >
               Bạn đang nghĩ gì?
             </button>
@@ -250,7 +336,7 @@ const Post = () => {
         </div>
       </div>
 
-      {/* Post Creation Modal */}
+      {/* Post Creation Modal - giữ nguyên từ code gốc */}
       {showPostModal && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -260,7 +346,6 @@ const Post = () => {
             className="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white rounded-t-xl">
               <h2 className="text-lg font-semibold text-gray-800">Tạo bài viết</h2>
               <button
@@ -272,9 +357,7 @@ const Post = () => {
               </button>
             </div>
 
-            {/* Modal Body - Form */}
             <form onSubmit={handleSubmitPost} className="p-4 space-y-4">
-              {/* Author Info */}
               <div className="flex items-start space-x-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-bold">A</span>
@@ -284,7 +367,7 @@ const Post = () => {
                   <select
                     value={formData.privacy}
                     onChange={(e) => handleFormChange("privacy", e.target.value)}
-                    className="mt-1 text-sm text-gray-600 bg-gray-100 rounded px-2 py-1 border-0 focus:ring-pink-500"
+                    className="mt-1 text-sm text-gray-600 bg-gray-100 rounded px-2 py-1 border-0 focus:ring-2 focus:ring-pink-500"
                     disabled={isUploading}
                   >
                     <option value="public">🌍 Công khai</option>
@@ -294,7 +377,6 @@ const Post = () => {
                 </div>
               </div>
 
-              {/* Main Text Content */}
               <div>
                 <textarea
                   value={formData.text}
@@ -306,7 +388,6 @@ const Post = () => {
                 />
               </div>
 
-              {/* Photo Upload Section */}
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-800">Thêm vào bài viết của bạn</h4>
@@ -322,7 +403,6 @@ const Post = () => {
                   </div>
                 </div>
 
-                {/* Hidden File Input */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -333,7 +413,6 @@ const Post = () => {
                   disabled={isUploading}
                 />
 
-                {/* Drop Zone */}
                 {formData.selectedFiles.length === 0 && (
                   <div
                     className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
@@ -347,7 +426,6 @@ const Post = () => {
                   </div>
                 )}
 
-                {/* Selected Images Preview */}
                 {formData.selectedFiles.length > 0 && (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -366,13 +444,9 @@ const Post = () => {
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <div className="absolute bottom-2 left-2 bg-gray-800 bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                            {file.name.length > 15 ? file.name.substring(0, 15) + "..." : file.name}
-                          </div>
                         </div>
                       ))}
 
-                      {/* Add More Button */}
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
@@ -383,13 +457,10 @@ const Post = () => {
                         <span className="text-sm text-gray-500">Thêm ảnh</span>
                       </button>
                     </div>
-
-                    <p className="text-sm text-gray-500">Đã chọn {formData.selectedFiles.length} ảnh</p>
                   </div>
                 )}
               </div>
 
-              {/* Location */}
               <div>
                 <div className="flex items-center space-x-2 mb-2">
                   <MapPin className="w-4 h-4 text-gray-500" />
@@ -398,13 +469,12 @@ const Post = () => {
                     value={formData.location}
                     onChange={(e) => handleFormChange("location", e.target.value)}
                     placeholder="Bạn đang ở đâu?"
-                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-pink-500"
+                    className="flex-1 p-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                     disabled={isUploading}
                   />
                 </div>
               </div>
 
-              {/* Device Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Thiết bị</label>
                 <div className="flex space-x-2">
@@ -431,7 +501,6 @@ const Post = () => {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="pt-4">
                 <button
                   type="submit"
@@ -457,108 +526,204 @@ const Post = () => {
         </div>
       )}
 
-      {/* Display Posts */}
+      {/* Display Posts - Cải thiện UX */}
       {[...posts]
-  .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  .map((post, index) => (
-    <div key={post._id || index} className="bg-white rounded-xl shadow mb-6">
-      <div className="p-4">
-        <div className="flex items-center space-x-3 mb-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold">
-              {post.author?.profile?.fullName?.charAt(0) || post.author?.username?.charAt(0) || "U"}
-            </span>
-          </div>
-          <div>
-            <h3 className="font-semibold">
-              {post.author?.profile?.fullName || post.author?.username || "Unknown User"}
-            </h3>
-            <p className="text-sm text-gray-500">
-              {new Date(post.createdAt).toLocaleString()}
-            </p>
-          </div>
-        </div>
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .map((post, index) => (
+          <div key={post._id || index} className="bg-white rounded-xl shadow mb-6 overflow-hidden">
+            {/* Post Header */}
+            <div className="p-4">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold">
+                    {post.author?.profile?.fullName?.charAt(0) || post.author?.username?.charAt(0) || "U"}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-semibold">
+                    {post.author?.profile?.fullName || post.author?.username || "Unknown User"}
+                  </h3>
+                  <p className="text-sm text-gray-500">{new Date(post.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
 
-        <p className="mb-3 text-gray-800">{post.text}</p>
+              {/* Post Content - Click để mở comments */}
+              <div
+                className="cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={() => togglePostExpansion(post._id)}
+              >
+                <p className="mb-3 text-gray-800">{post.text}</p>
 
-        {post.meta?.location && (
-          <p className="text-sm text-gray-600 mb-3">
-            <MapPin className="w-4 h-4 inline mr-1" />
-            {post.meta.location}
-          </p>
-        )}
-      </div>
+                {post.meta?.location && (
+                  <p className="text-sm text-gray-600 mb-3">
+                    <MapPin className="w-4 h-4 inline mr-1" />
+                    {post.meta.location}
+                  </p>
+                )}
+              </div>
+            </div>
 
-      {post.media && post.media.length > 0 && (
-        <div className="mb-3">
-          {post.media.length === 1 ? (
-            <img
-              src={post.media[0].url || "/placeholder.svg"}
-              alt="Post media"
-              className="w-full max-h-96 object-cover"
-            />
-          ) : (
-            <div className={`grid gap-1 ${post.media.length === 2 ? "grid-cols-2" : "grid-cols-2"}`}>
-              {post.media.slice(0, 4).map((media, mediaIndex) => (
-                <div key={mediaIndex} className="relative">
+            {/* Post Media */}
+            {post.media && post.media.length > 0 && (
+              <div className="mb-3">
+                {post.media.length === 1 ? (
                   <img
-                    src={media.url || "/placeholder.svg"}
-                    alt={`Post media ${mediaIndex + 1}`}
-                    className="w-full h-48 object-cover"
+                    src={post.media[0].url || "/placeholder.svg"}
+                    alt="Post media"
+                    className="w-full max-h-96 object-cover cursor-pointer"
+                    onClick={() => togglePostExpansion(post._id)}
                   />
-                  {mediaIndex === 3 && post.media.length > 4 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white text-xl font-bold">
-                        +{post.media.length - 4}
-                      </span>
+                ) : (
+                  <div
+                    className={`grid gap-1 cursor-pointer ${post.media.length === 2 ? "grid-cols-2" : "grid-cols-2"}`}
+                    onClick={() => togglePostExpansion(post._id)}
+                  >
+                    {post.media.slice(0, 4).map((media, mediaIndex) => (
+                      <div key={mediaIndex} className="relative">
+                        <img
+                          src={media.url || "/placeholder.svg"}
+                          alt={`Post media ${mediaIndex + 1}`}
+                          className="w-full h-48 object-cover"
+                        />
+                        {mediaIndex === 3 && post.media.length > 4 && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                            <span className="text-white text-xl font-bold">+{post.media.length - 4}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Post Stats */}
+            <div className="px-4 pb-2">
+              <div className="text-sm text-gray-500 mb-1">
+                Privacy: {post.privacy} • Device: {post.meta?.device}
+              </div>
+
+              <div className="text-sm text-gray-600 flex justify-between mt-2 mb-1">
+                <span className="flex items-center">
+                  <Heart className="w-4 h-4 mr-1 text-red-500" />
+                  {post.interactions?.likes || 0} lượt thích
+                </span>
+                <span className="flex items-center">
+                  <MessageCircle className="w-4 h-4 mr-1 text-blue-500" />
+                  {postComments[post._id]?.length || 0} bình luận
+                </span>
+                <span className="flex items-center">
+                  <Share2 className="w-4 h-4 mr-1 text-green-500" />
+                  {post.interactions?.shares || 0} lượt chia sẻ
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="border-t border-gray-200 pt-2 mt-2 flex justify-around text-sm font-semibold text-gray-600">
+                <button
+                  onClick={() => handleLikeToggle(post._id)}
+                  className={`hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                    likedPosts.includes(post._id) ? "text-red-500" : ""
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${likedPosts.includes(post._id) ? "fill-current" : ""}`} />
+                  {likedPosts.includes(post._id) ? "Đã thích" : "Thích"}
+                </button>
+                <button
+                  onClick={() => togglePostExpansion(post._id)}
+                  className="hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-2 transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Bình luận
+                </button>
+                <button className="hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-2 transition-colors">
+                  <Share2 className="w-4 h-4" />
+                  Chia sẻ
+                </button>
+              </div>
+
+              {/* Comments Section - Hiển thị khi expanded */}
+              {expandedPosts[post._id] && (
+                <div className="mt-4 border-t border-gray-200 pt-4">
+                  {/* Comment Input */}
+                  <div className="flex items-start space-x-3 mb-4">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-sm">U</span>
+                    </div>
+                    <div className="flex-1 flex items-end space-x-2">
+                      <div className="flex-1 bg-gray-100 rounded-2xl px-4 py-2">
+                        <textarea
+                          value={commentInputs[post._id] || ""}
+                          onChange={(e) => handleCommentInputChange(post._id, e.target.value)}
+                          onKeyPress={(e) => handleCommentKeyPress(e, post._id)}
+                          placeholder="Viết bình luận..."
+                          className="w-full bg-transparent resize-none focus:outline-none text-sm"
+                          rows="1"
+                          disabled={isSubmittingComment[post._id]}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSubmitComment(post._id)}
+                        disabled={!commentInputs[post._id]?.trim() || isSubmittingComment[post._id]}
+                        className={`p-2 rounded-full transition-colors ${
+                          commentInputs[post._id]?.trim() && !isSubmittingComment[post._id]
+                            ? "text-pink-500 hover:bg-pink-50"
+                            : "text-gray-400 cursor-not-allowed"
+                        }`}
+                      >
+                        {isSubmittingComment[post._id] ? (
+                          <div className="w-4 h-4 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Comments List */}
+                  {postComments[post._id] && postComments[post._id].length > 0 && (
+                    <div className="space-y-3">
+                      {postComments[post._id].map((comment, commentIndex) => (
+                        <div key={comment._id || commentIndex} className="flex items-start space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-sm">
+                              {comment.user?.profile?.fullName?.charAt(0) || comment.user?.username?.charAt(0) || "U"}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="bg-gray-100 rounded-2xl px-4 py-2">
+                              <p className="font-semibold text-sm text-gray-800">
+                                {comment.user?.profile?.fullName || comment.user?.username || "Người dùng"}
+                              </p>
+                              <p className="text-sm text-gray-700">{comment.content}</p>
+                            </div>
+                            <div className="flex items-center space-x-4 mt-1 ml-4">
+                              <span className="text-xs text-gray-500">
+                                {new Date(comment.createdAt).toLocaleString()}
+                              </span>
+                              <button className="text-xs text-gray-500 hover:text-gray-700 font-semibold">Thích</button>
+                              <button className="text-xs text-gray-500 hover:text-gray-700 font-semibold">
+                                Phản hồi
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* No comments message */}
+                  {(!postComments[post._id] || postComments[post._id].length === 0) && (
+                    <div className="text-center py-4 text-gray-500">
+                      <MessageCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</p>
                     </div>
                   )}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-      )}
-
-      <div className="px-4 pb-2">
-        <div className="text-sm text-gray-500 mb-1">
-          Privacy: {post.privacy} • Device: {post.meta?.device}
-        </div>
-
-        {/* Hiển thị tổng số tương tác */}
-        <div className="text-sm text-gray-600 flex justify-between mt-2 mb-1">
-          <span>❤️ {post.interactions.likes || 0} lượt thích</span>
-          <span>💬 {post.interactions.comments || 0} bình luận</span>
-          <span>🔁 {post.interactions.shares || 0} lượt chia sẻ</span>
-        </div>
-
-        {/* Giao diện các nút tương tác giống Facebook */}
-        <div className="border-t border-gray-200 pt-2 mt-2 flex justify-around text-sm font-semibold text-gray-600">
-          <button
-            onClick={handleLikeToggle}
-            className="hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-1"
-          >
-            {JSON.parse(localStorage.getItem("likedPosts") || "[]").includes(post._id)
-              ? "💔 Bỏ thích"
-              : "❤️ Thích"}{" "}
-          </button>
-          <button
-            onClick={() => console.log("Comment post:", post._id)}
-            className="hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-1"
-          >
-            💬 Bình luận
-          </button>
-          <button
-            onClick={() => console.log("Share post:", post._id)}
-            className="hover:bg-gray-100 px-4 py-2 rounded flex items-center gap-1"
-          >
-            🔁 Chia sẻ
-          </button>
-        </div>
-      </div>
-    </div>
-))}
-
+          </div>
+        ))}
     </div>
   )
 }

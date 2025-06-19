@@ -6,6 +6,7 @@ import Sidebar     from "./Sidebar"
 import MessageList from "./MessageList"
 import ChatWindow  from "./ChatWindow"
 import LoginForm   from "./LoginForm"
+import Login from "../common/Login"
 import CallModal   from "./CallModal"
 import { SocketProvider, useSocketContext } from '../../context/SocketContext'
 import "../../App.css"
@@ -238,8 +239,8 @@ const AppContent = ({currentUser}) => {
   )
 }
 
-function MessengerUI() {
-  const [currentUser, setCurrentUser] = useState(null);
+function MessengerUI({user}) {
+  const [currentUser, setCurrentUser] = useState(user);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = (userData) => {
@@ -258,7 +259,7 @@ function MessengerUI() {
   }
 
   if (!currentUser) {
-    return <LoginForm onLogin={handleLogin} />;
+    return <Login onLogin={handleLogin} />;
   }
 
 

@@ -85,6 +85,33 @@ const getAllPostById = async (req, res) => {
     res.status(500).json({ message: "Lỗi máy chủ." });
   }
 };
+const getAllPostByUserId = async (req, res) => {
+ try {
+    const { authorId } = req.params;
+    console.log(authorId)
+
+    // Kiểm tra xem authorId có được truyền vào không
+    if (!authorId) {
+      return res.status(400).json({ message: "Thiếu authorId trong yêu cầu." });
+    }
+
+    // Tìm tất cả bài viết có author trùng với authorId
+    // const posts = await Post.find({ author: authorId }).populate('author', 'username profile.fullName');
+    const posts = await Post.find({ author: authorId }).populate('author', 'username profile.fullName');
+
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({ message: "Không tìm thấy bài viết nào cho người dùng này." });
+    }
+
+    res.status(200).json({
+      message: "Lấy bài viết thành công!",
+      posts,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy bài viết:", error);
+    res.status(500).json({ message: "Lỗi máy chủ." });
+  }
+};
 
 const toggleLikeByUser = async (req, res) => {
   const { postId } = req.params;
@@ -100,5 +127,53 @@ const toggleLikeByUser = async (req, res) => {
   await post.save();
   res.status(200).json({ likes: post.interactions.likes });
 };
+const createComment = async(req, res) => {
+  const {postId} = req.params;
+  const {userId, content} = req.body
+  if(!userId){
+    return res.status(400).json({message: "thieu userId"})
+  }
+  else if(!content){
+    return res.status(400).json({message: "thieu noi dung binh luan"})
+  }
+  try{
+    const post = await Post.findById(postId)
+    if(!postId) return res.status(404).json({message: "khong tim thay bai viet"})
+      const newComment ={
+        user: userId,
+        content,
+        createAt: new Date(),
+      }
 
-export { createPost, getAllPostById, toggleLikeByUser};
+    post.interactions.comments.push(newComment)
+
+    await post.save();
+    
+    const addedComment = post.interactions.comments[post.interactions.comments.length - 1];
+
+    return res.status(200).json({ message: "Đã thêm bình luận", comment: addedComment });
+  }
+  catch (err){
+    return res.status(500).json({message: "Loi server", error: error.message});
+  }
+}
+
+const getComments = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const post = await Post.findById(postId).populate('interactions.comments.user', 'name email'); // populate user nếu cần
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    return res.status(200).json({ comments: post.interactions.comments });
+
+  
+  } catch (error) {
+    console.error('Error getting comments:', error);
+    return res.status(500).json({ message: 'Lỗi server khi lấy bình luận' });
+  }
+};
+export { createPost, getAllPostById, toggleLikeByUser, createComment, getComments, getAllPostByUserId};

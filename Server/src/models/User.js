@@ -5,7 +5,14 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   avatar: { type: String, default: '/placeholder.svg' },
-  isOnline: {type:Boolean, default:false}
+  isOnline: {type:Boolean, default:false},
+  profile:{
+      fullName: String,
+      avatar: String,
+      bio: String,
+      birthday: Date,
+      location: String
+  }
 });
 const User = mongoose.model('User', UserSchema);
 

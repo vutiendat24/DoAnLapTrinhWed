@@ -47,8 +47,7 @@ const ChatWindow = ({ contact }) => {
   useEffect(() => {
     const loadChatHistory = async () => {
       const history = await fetchChatHistory(currentUser.id, contact.id);
-      console.log( currentUser)
-      console.log("contact"+ contact)
+  
       setChatHistory(history); // lưu vào state mới
     };
 

@@ -27,6 +27,7 @@ import authRoutes from '../src/routes/auth.js';
 import messageRoutes from '../src/routes/chat.js';
 
 import userRoutes from '../src/routes/users.js'
+import profile from '../src/routes/profile.js'
 
 connectDB()
 app.use(cors({
@@ -36,7 +37,7 @@ app.use(cors({
 
 app.use(express.json())
 
-
+app.use('/api/profile', profile)
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', messageRoutes);
@@ -86,17 +87,7 @@ io.on("connection", (socket) => {
         timestamp,
       })
 
-      // io.to(sender.userId).emit("private_message", {
-      //   senderId: sender.userId,
-      //   senderInfo: {
-      //     username: sender.username,
-      //     avatar: sender.avatar,
-      //   },
-      //   message,
-      //   messageType,
-      //   timestamp,
-      // });
-      console.log(`✉️ Message from ${sender.username} to ${recipientId}: ${message}`)
+  
     }
   })
 

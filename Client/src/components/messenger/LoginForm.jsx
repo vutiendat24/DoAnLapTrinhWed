@@ -31,7 +31,7 @@ const LoginForm = ({ onLogin }) => {
   //     password: "123456",
   //   },
   // ]
-const handleSubmit = async(e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault()
 
     if (isLogin) {
